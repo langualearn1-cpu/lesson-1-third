@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار تحديد المستوى التفاعلي - الأستاذ ماجد السويهري</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f0f4f8;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .en-font {
+            font-family: 'Nunito', sans-serif;
+        }
+        .en-title {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* تأثير رسم الدائرة حول الإجابة */
+        .circle-svg {
+            position: absolute;
+            top: -8px;
+            left: -14px;
+            width: calc(100% + 28px);
+            height: calc(100% + 16px);
+            pointer-events: none;
+            overflow: visible;
+            z-index: 10;
+        }
+        .circle-path {
+            fill: none;
+            stroke-width: 3.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 600;
+            stroke-dashoffset: 600;
+            transition: stroke-dashoffset 0.55s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease;
+        }
+        .option-btn.selected .circle-path {
+            stroke-dashoffset: 0;
+        }
+
+        /* ألوان الدائرة حسب الحالة */
+        .stroke-selected { stroke: #4f46e5; }
+        .stroke-correct { stroke: #16a34a !important; }
+        .stroke-wrong { stroke: #dc2626 !important; }
+
+        /* إعدادات الطباعة */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .print-container {
+                box-shadow: none !important;
+                border: 2px solid #cbd5e1 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 12px !important;
+            }
+            .page-break-avoid {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-6 px-3 sm:px-6 text-slate-800">
+
+    <div class="max-w-6xl mx-auto">
+        
+        <!-- ترويسة الاختبار الرئيسية (بنفس هوية ورقة العمل) -->
+        <header class="bg-[#1e3a8a] text-white rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-6 print-container page-break-avoid">
+            <!-- الشريط العلوي: اسم الطالب والدرجة -->
+            <div class="bg-[#172554] px-6 py-3 flex flex-wrap items-center justify-between gap-4 border-b border-blue-800">
+                <div class="flex items-center gap-3 flex-1 min-w-[240px]">
+                    <label for="studentName" class="font-bold text-sm sm:text-base whitespace-nowrap text-blue-100">
+                        👤 اسم الطالب / <span class="en-font">Name:</span>
+                    </label>
+                    <input type="text" id="studentName" placeholder="اكتب اسمك هنا..." 
+                        class="bg-white text-slate-900 font-bold px-4 py-1.5 rounded-xl border-2 border-blue-300 focus:border-amber-400 focus:outline-none w-full max-w-xs text-sm sm:text-base">
+                </div>
+
+                <div class="text-center hidden md:block">
+                    <span class="en-title tracking-wider text-blue-200 font-bold text-lg">UNIT 1 • LESSON 1</span>
+                </div>
+
+                <div class="bg-white text-slate-900 px-5 py-1.5 rounded-xl font-extrabold flex items-center gap-2 shadow-inner border-2 border-blue-200">
+                    <span class="en-font text-slate-600">Score:</span>
+                    <span id="headerScore" class="text-xl text-indigo-700 en-font">--</span>
+                    <span class="en-font text-slate-500">/ 3</span>
+                </div>
+            </div>
+
+            <!-- الشعار والعنوان واسم المعلم -->
+            <div class="px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 relative">
+                <!-- اللوقو: Langua Learn -->
+                <div class="bg-white px-4 py-2 rounded-2xl shadow-md flex items-center gap-3 border-2 border-orange-200">
+                    <svg class="w-11 h-11" viewBox="0 0 100 100" fill="none">
+                        <!-- إطار اللوقو البرتقالي -->
+                        <path d="M10 10 H75 V35 H60 V25 H25 V75 H55 V90 H10 Z" fill="#EB8258"/>
+                        <!-- قبعة التخرج البنفسجية -->
+                        <polygon points="50,35 15,50 50,65 85,50" fill="#3B096C"/>
+                        <path d="M32 58 V74 C32 80 68 80 68 74 V58 L50 67 Z" fill="#4A148C"/>
+                        <path d="M75 54 V74" stroke="#3B096C" stroke-width="4" stroke-linecap="round"/>
+                        <circle cx="75" cy="75" r="4" fill="#3B096C"/>
+                    </svg>
+                    <div class="leading-none text-left en-title" dir="ltr">
+                        <div class="text-[#EB8258] font-extrabold text-xl tracking-widest">LANGUA</div>
+                        <div class="text-[#4A148C] font-extrabold text-xl tracking-widest">LEARN</div>
+                        <div class="text-[#EB8258] text-[9px] font-sans tracking-tight mt-0.5">Learn, Grow, Succeed</div>
+                    </div>
+                </div>
+
+                <!-- عنوان الدرس -->
+                <div class="text-center">
+                    <div class="text-xs font-bold text-amber-300 mb-1">اختبار تحديد المستوى التفاعلي</div>
+                    <h1 class="en-title text-3xl sm:text-5xl font-extrabold tracking-wide text-white drop-shadow">
+                        Nice to Meet You!
+                    </h1>
+                    <div class="mt-2 inline-flex items-center gap-2 bg-[#99d5cf] text-slate-900 px-4 py-1 rounded-full text-xs sm:text-sm font-bold en-font shadow">
+                        <span>🎯</span>
+                        <span>Ask and answer about name, age, and city.</span>
+                    </div>
+                </div>
+
+                <!-- اسم الأستاذ -->
+                <div class="bg-blue-900/70 border border-blue-400/40 px-5 py-2.5 rounded-2xl text-center">
+                    <div class="text-amber-300 text-sm font-bold">إعداد الأستاذ:</div>
+                    <div class="text-white text-lg sm:text-xl font-extrabold tracking-wide">ماجد السويهري</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- القسم الرئيسي: لوحة الأسئلة + ورقة الاختبار -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- لوحة الأسئلة (يمين في الشاشات الكبيرة) -->
+            <aside class="lg:col-span-4 bg-white rounded-3xl shadow-lg border-2 border-indigo-100 p-5 print-container page-break-avoid">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                    <h2 class="font-extrabold text-lg text-indigo-950 flex items-center gap-2">
+                        <span class="bg-indigo-100 text-indigo-700 p-1.5 rounded-xl">📋</span>
+                        لوحة الأسئلة والمستوى
+                    </h2>
+                    <span id="progressBadge" class="text-xs font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full">
+                        0 / 3 مجاب
+                    </span>
+                </div>
+
+                <!-- أزرار أرقام الأسئلة -->
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <button onclick="scrollToQuestion(1)" id="navBtn-1" class="flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:border-indigo-400 transition group">
+                        <span class="text-xs text-slate-500 font-bold mb-1">السؤال 1</span>
+                        <span class="w-9 h-9 rounded-full bg-white border-2 border-slate-300 flex items-center justify-center font-extrabold text-slate-700 en-font group-hover:scale-105 transition" id="navCircle-1">1</span>
+                        <span class="text-[11px] font-bold mt-1.5 text-slate-500" id="navStatus-1">الاسم</span>
+                    </button>
+
+                    <button onclick="scrollToQuestion(2)" id="navBtn-2" class="flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:border-indigo-400 transition group">
+                        <span class="text-xs text-slate-500 font-bold mb-1">السؤال 2</span>
+                        <span class="w-9 h-9 rounded-full bg-white border-2 border-slate-300 flex items-center justify-center font-extrabold text-slate-700 en-font group-hover:scale-105 transition" id="navCircle-2">2</span>
+                        <span class="text-[11px] font-bold mt-1.5 text-slate-500" id="navStatus-2">العمر</span>
+                    </button>
+
+                    <button onclick="scrollToQuestion(3)" id="navBtn-3" class="flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:border-indigo-400 transition group">
+                        <span class="text-xs text-slate-500 font-bold mb-1">السؤال 3</span>
+                        <span class="w-9 h-9 rounded-full bg-white border-2 border-slate-300 flex items-center justify-center font-extrabold text-slate-700 en-font group-hover:scale-105 transition" id="navCircle-3">3</span>
+                        <span class="text-[11px] font-bold mt-1.5 text-slate-500" id="navStatus-3">المدينة</span>
+                    </button>
+                </div>
+
+                <!-- دليل ألوان اللوحة -->
+                <div class="bg-slate-50 rounded-2xl p-3 text-xs space-y-2 border border-slate-100 mb-5">
+                    <div class="font-bold text-slate-700 mb-1">دليل لوحة الأسئلة:</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded-full bg-white border-2 border-slate-300 inline-block"></span>
+                            <span>غير مجاب</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded-full bg-indigo-600 inline-block"></span>
+                            <span>تم وضع دائرة</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block"></span>
+                            <span>إجابة صحيحة</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded-full bg-rose-500 inline-block"></span>
+                            <span>إجابة خاطئة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مقياس تحديد المستوى الحي -->
+                <div class="border-t border-slate-100 pt-4">
+                    <div class="text-xs font-bold text-slate-500 mb-2">مؤشر مستوى الطالب:</div>
+                    <div id="liveLevelBox" class="bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl p-4 text-center border border-slate-200">
+                        <div class="text-3xl mb-1" id="levelEmoji">📝</div>
+                        <div class="font-extrabold text-slate-800 text-base" id="levelTitle">بانتظار إكمال الإجابات</div>
+                        <p class="text-xs text-slate-600 mt-1" id="levelDesc">ضع دائرة حول الإجابة الصحيحة في الأسئلة الثلاثة ثم اضغط على اعتماد النتيجة.</p>
+                    </div>
+                </div>
+
+                <!-- أزرار التحكم والطباعة -->
+                <div class="mt-5 space-y-2.5 no-print">
+                    <button id="submitBtn" onclick="evaluateQuiz()" class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-extrabold py-3 px-4 rounded-2xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
+                        <span>✅</span>
+                        <span>اعتماد الإجابات وتحديد المستوى</span>
+                    </button>
+
+                    <button id="printBtn" onclick="printStudentResult()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-extrabold py-3 px-4 rounded-2xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
+                        <span>🖨️</span>
+                        <span>طباعة نتيجة الطالب</span>
+                    </button>
+
+                    <button id="resetBtn" onclick="resetQuiz()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-2xl transition flex items-center justify-center gap-2 text-sm">
+                        <span>🔄</span>
+                        <span>إعادة الاختبار من جديد</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- ورقة العمل التفاعلية (الأسئلة الثلاثة + الكعكة) -->
+            <main class="lg:col-span-8 space-y-6">
+                
+                <!-- البطاقة المطابقة للصورة المرفقة -->
+                <section class="bg-white rounded-3xl shadow-lg border-[3px] border-[#8b7ab8] p-5 sm:p-8 relative print-container page-break-avoid">
+                    
+                    <!-- العنوان البنفسجي كما في الصورة -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-6 border-b border-purple-100 pb-4">
+                        <div class="bg-[#8b7ab8] text-white px-5 py-2 rounded-2xl shadow-sm inline-flex items-center gap-2">
+                            <span class="en-title font-bold text-lg sm:text-xl tracking-wide" dir="ltr">2. Choose the correct answer</span>
+                        </div>
+                        <div class="text-sm font-bold text-purple-900 bg-purple-50 px-3.5 py-1.5 rounded-xl border border-purple-200">
+                            ⭕ ضع دائرة حول الإجابة الصحيحة بالضغط عليها
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center" dir="ltr">
+                        
+                        <!-- قائمة الأسئلة الثلاثة (يسار) -->
+                        <div class="md:col-span-7 space-y-6 en-font text-left">
+
+                            <!-- السؤال الأول -->
+                            <div id="qCard-1" class="p-4 rounded-2xl border-2 border-transparent transition-all bg-slate-50/70 hover:bg-slate-50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+                                        <span>1) What is your name?</span>
+                                        <button onclick="speakText('What is your name?')" title="استمع للسؤال" class="no-print text-indigo-600 hover:bg-indigo-100 p-1.5 rounded-full transition text-base">🔊</button>
+                                    </h3>
+                                    <span id="qBadge-1" class="text-xs font-bold px-2.5 py-1 rounded-full hidden" dir="rtl"></span>
+                                </div>
+                                <div class="space-y-2.5 pl-4">
+                                    <div>
+                                        <button type="button" onclick="selectOption(1, 'a')" id="opt-1-a" class="option-btn relative inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-lg sm:text-xl font-bold text-slate-700 hover:text-indigo-700 transition">
+                                            <span>a) I am nine.</span>
+                                            <svg class="circle-svg" viewBox="0 0 240 54" preserveAspectRatio="none">
+                                                <path class="circle-path stroke-selected" d="M 22,27 C 22,8 218,6 225,26 C 230,45 25,49 16,28 C 12,18 65,10 120,12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <button type="button" onclick="selectOption(1, 'b')" id="opt-1-b" class="option-btn relative inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-lg sm:text-xl font-bold text-slate-700 hover:text-indigo-700 transition">
+                                            <span>b) My name is Sara.</span>
+                                            <svg class="circle-svg" viewBox="0 0 240 54" preserveAspectRatio="none">
+                                                <path class="circle-path stroke-selected" d="M 22,27 C 22,8 218,6 225,26 C 230,45 25,49 16,28 C 12,18 65,10 120,12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="feedback-1" class="mt-2 text-xs font-bold hidden" dir="rtl"></div>
+                            </div>
+
+                            <!-- السؤال الثاني -->
+                            <div id="qCard-2" class="p-4 rounded-2xl border-2 border-transparent transition-all bg-slate-50/70 hover:bg-slate-50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+                                        <span>2) How old are you?</span>
+                                        <button onclick="speakText('How old are you?')" title="استمع للسؤال" class="no-print text-indigo-600 hover:bg-indigo-100 p-1.5 rounded-full transition text-base">🔊</button>
+                                    </h3>
+                                    <span id="qBadge-2" class="text-xs font-bold px-2.5 py-1 rounded-full hidden" dir="rtl"></span>
+                                </div>
+                                <div class="space-y-2.5 pl-4">
+                                    <div>
+                                        <button type="button" onclick="selectOption(2, 'a')" id="opt-2-a" class="option-btn relative inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-lg sm:text-xl font-bold text-slate-700 hover:text-indigo-700 transition">
+                                            <span>a) I am ten.</span>
+                                            <svg class="circle-svg" viewBox="0 0 240 54" preserveAspectRatio="none">
+                                                <path class="circle-path stroke-selected" d="M 22,27 C 22,8 218,6 225,26 C 230,45 25,49 16,28 C 12,18 65,10 120,12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <button type="button" onclick="selectOption(2, 'b')" id="opt-2-b" class="option-btn relative inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-lg sm:text-xl font-bold text-slate-700 hover:text-indigo-700 transition">
+                                            <span>b) I live in Jeddah.</span>
+                                            <svg class="circle-svg" viewBox="0 0 240 54" preserveAspectRatio="none">
+                                                <path class="circle-path stroke-selected" d="M 22,27 C 22,8 218,6 225,26 C 230,45 25,49 16,28 C 12,18 65,10 120,12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="feedback-2" class="mt-2 text-xs font-bold hidden" dir="rtl"></div>
+                            </div>
+
+                            <!-- السؤال الثالث -->
+                            <div id="qCard-3" class="p-4 rounded-2xl border-2 border-transparent transition-all bg-slate-50/70 hover:bg-slate-50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+                                        <span>3) Where do you live?</span>
+                                        <button onclick="speakText('Where do you live?')" title="استمع للسؤال" class="no-print text-indigo-600 hover:bg-indigo-100 p-1.5 rounded-full transition text-base">🔊</button>
+                                    </h3>
+                                    <span id="qBadge-3" class="text-xs font-bold px-2.5 py-1 rounded-full hidden" dir="rtl"></span>
+                                </div>
+                                <div class="space-y-2.5 pl-4">
+                                    <div>
+                                        <button type="button" onclick="selectOption(3, 'a')" id="opt-3-a" class="option-btn relative inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-lg sm:text-xl font-bold text-slate-700 hover:text-indigo-700 transition">
+                                            <span>a) I live in Riyadh.</span>
+                                            <svg class="circle-svg" viewBox="0 0 240 54" preserveAspectRatio="none">
+                                                <path class="circle-path stroke-selected" d="M 22,27 C 22,8 218,6 225,26 C 230,45 25,49 16,28 C 12,18 65,10 120,12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <button type="button" onclick="selectOption(3, 'b')" id="opt-3-b" class="option-btn relative inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-lg sm:text-xl font-bold text-slate-700 hover:text-indigo-700 transition">
+                                            <span>b) My name is Ali.</span>
+                                            <svg class="circle-svg" viewBox="0 0 240 54" preserveAspectRatio="none">
+                                                <path class="circle-path stroke-selected" d="M 22,27 C 22,8 218,6 225,26 C 230,45 25,49 16,28 C 12,18 65,10 120,12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="feedback-3" class="mt-2 text-xs font-bold hidden" dir="rtl"></div>
+                            </div>
+
+                        </div>
+
+                        <!-- رسمة كعكة الميلاد بالشموع كما في الصورة (يمين) -->
+                        <div class="md:col-span-5 flex flex-col items-center justify-center">
+                            <svg class="w-60 sm:w-72 h-auto drop-shadow-md" viewBox="0 0 300 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <!-- الطبق الأزرق -->
+                                <ellipse cx="150" cy="235" rx="115" ry="26" fill="#4FA3D1" stroke="#2C7DA8" stroke-width="3"/>
+                                <ellipse cx="150" cy="231" rx="100" ry="20" fill="#63B4E0"/>
+
+                                <!-- قاعدة الكعكة (الطبقة الكريمية الصفراء) -->
+                                <path d="M55 150 V215 C55 235 245 235 245 215 V150 Z" fill="#FDE6B0" stroke="#E5C578" stroke-width="2"/>
+                                <!-- تموجات الكريمة الوردية في المنتصف -->
+                                <path d="M55 190 Q70 200 85 190 T115 190 T145 190 T175 190 T205 190 T235 190 L245 193 V202 Q230 212 215 202 T185 202 T155 202 T125 202 T95 202 T65 202 L55 198 Z" fill="#F497A9"/>
+
+                                <!-- كريمة الكعكة العلوية الوردية -->
+                                <path d="M52 145 C52 128 248 128 248 145 V165 C235 178 220 155 207 168 C194 180 180 155 166 170 C152 184 138 158 124 170 C110 182 95 156 80 168 C67 178 52 162 52 155 Z" fill="#F2788D" stroke="#D95B72" stroke-width="2"/>
+                                <ellipse cx="150" cy="142" rx="98" ry="20" fill="#F78FA2" stroke="#D95B72" stroke-width="2"/>
+
+                                <!-- الشموع الملونة -->
+                                <!-- شمعة 1 (وردي) -->
+                                <rect x="75" y="88" width="12" height="52" rx="4" fill="#EC4899" stroke="#BE185D" stroke-width="1.5"/>
+                                <path d="M75 102 L87 110 M75 118 L87 126" stroke="#FBCFE8" stroke-width="3"/>
+                                <!-- شمعة 2 (برتقالي) -->
+                                <rect x="98" y="82" width="12" height="56" rx="4" fill="#F97316" stroke="#C2410C" stroke-width="1.5"/>
+                                <path d="M98 98 L110 106 M98 115 L110 123" stroke="#FED7AA" stroke-width="3"/>
+                                <!-- شمعة 3 (أخضر) -->
+                                <rect x="122" y="78" width="12" height="60" rx="4" fill="#10B981" stroke="#047857" stroke-width="1.5"/>
+                                <path d="M122 95 L134 103 M122 112 L134 120" stroke="#A7F3D0" stroke-width="3"/>
+                                <!-- شمعة 4 (أبيض/سماوي) -->
+                                <rect x="145" y="76" width="12" height="62" rx="4" fill="#E0F2FE" stroke="#0284C7" stroke-width="1.5"/>
+                                <!-- شمعة 5 (أزرق/برتقالي) -->
+                                <rect x="168" y="78" width="12" height="60" rx="4" fill="#6366F1" stroke="#4338CA" stroke-width="1.5"/>
+                                <path d="M168 95 L180 105 M168 114 L180 124" stroke="#FDBA74" stroke-width="3.5"/>
+                                <!-- شمعة 6 (بنفسجي) -->
+                                <rect x="191" y="82" width="12" height="56" rx="4" fill="#A855F7" stroke="#7E22CE" stroke-width="1.5"/>
+                                <path d="M191 98 L203 106 M191 115 L203 123" stroke="#E9D5FF" stroke-width="3"/>
+                                <!-- شمعة 7 (أصفر) -->
+                                <rect x="214" y="88" width="12" height="52" rx="4" fill="#FACC15" stroke="#CA8A04" stroke-width="1.5"/>
+                                <path d="M214 104 L226 112 M214 120 L226 128" stroke="#FEF08A" stroke-width="3"/>
+
+                                <!-- لهب الشموع -->
+                                <g>
+                                    <path d="M81 62 C74 74 76 84 81 85 C86 84 88 74 81 62 Z" fill="#FDE047"/>
+                                    <path d="M81 68 C78 75 79 82 81 83 C83 82 84 75 81 68 Z" fill="#F97316"/>
+
+                                    <path d="M104 56 C97 68 99 78 104 79 C109 78 111 68 104 56 Z" fill="#FDE047"/>
+                                    <path d="M104 62 C101 69 102 76 104 77 C106 76 107 69 104 62 Z" fill="#F97316"/>
+
+                                    <path d="M128 52 C121 64 123 74 128 75 C133 74 135 64 128 52 Z" fill="#FDE047"/>
+                                    <path d="M128 58 C125 65 126 72 128 73 C130 72 131 65 128 58 Z" fill="#F97316"/>
+
+                                    <path d="M151 50 C144 62 146 72 151 73 C156 72 158 62 151 50 Z" fill="#FDE047"/>
+                                    <path d="M151 56 C148 63 149 70 151 71 C153 70 154 63 151 56 Z" fill="#F97316"/>
+
+                                    <path d="M174 52 C167 64 169 74 174 75 C179 74 181 64 174 52 Z" fill="#FDE047"/>
+                                    <path d="M174 58 C171 65 172 72 174 73 C176 72 177 65 174 58 Z" fill="#F97316"/>
+
+                                    <path d="M197 56 C190 68 192 78 197 79 C202 78 204 68 197 56 Z" fill="#FDE047"/>
+                                    <path d="M197 62 C194 69 195 76 197 77 C199 76 200 69 197 62 Z" fill="#F97316"/>
+
+                                    <path d="M220 62 C213 74 215 84 220 85 C225 84 227 74 220 62 Z" fill="#FDE047"/>
+                                    <path d="M220 68 C217 75 218 82 220 83 C222 82 223 75 220 68 Z" fill="#F97316"/>
+                                </g>
+                            </svg>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- بطاقة تقرير نتيجة ومستوى الطالب (تظهر عند الاعتماد وفي الطباعة) -->
+                <section id="resultReportCard" class="hidden bg-white rounded-3xl shadow-xl border-4 border-indigo-200 p-6 sm:p-8 print-container page-break-avoid">
+                    <div class="flex flex-wrap items-center justify-between gap-4 border-b-2 border-slate-100 pb-4 mb-6">
+                        <div>
+                            <span class="text-xs font-extrabold uppercase tracking-wider bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full">تقرير معتمد</span>
+                            <h2 class="text-2xl font-extrabold text-slate-900 mt-1">بطاقة تقييم مستوى الطالب</h2>
+                        </div>
+                        <div class="text-left text-xs text-slate-500 font-bold" id="reportDate"></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                            <div class="text-xs text-slate-500 font-bold">اسم الطالب</div>
+                            <div id="reportStudentName" class="text-lg font-extrabold text-slate-900 mt-1">غير محدد</div>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                            <div class="text-xs text-slate-500 font-bold">الدرجة النهائية</div>
+                            <div id="reportFinalScore" class="text-2xl font-extrabold text-indigo-700 en-font mt-0.5">0 / 3</div>
+                        </div>
+                        <div id="reportLevelBadgeBox" class="bg-emerald-50 p-4 rounded-2xl border border-emerald-200">
+                            <div class="text-xs text-emerald-700 font-bold">المستوى العام</div>
+                            <div id="reportFinalLevel" class="text-lg font-extrabold text-emerald-900 mt-1">--</div>
+                        </div>
+                    </div>
+
+                    <!-- تفصيل المهارات الثلاث -->
+                    <h3 class="font-extrabold text-sm text-slate-700 mb-3">تحليل المهارات التفصيلي:</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6" id="skillsBreakdown">
+                        <!-- يتم تعبئتها ديناميكياً -->
+                    </div>
+
+                    <!-- التوصية التربوية وتوقيع المعلم -->
+                    <div class="bg-indigo-50/70 rounded-2xl p-4 border border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                            <div class="text-xs font-extrabold text-indigo-900 mb-1">💡 التوصية التربوية:</div>
+                            <p id="reportRecommendation" class="text-sm font-bold text-slate-700"></p>
+                        </div>
+                        <div class="border-r-2 border-indigo-200 pr-4 whitespace-nowrap text-right">
+                            <div class="text-xs text-slate-500 font-bold">إشراف ومعلم المادة:</div>
+                            <div class="text-base font-extrabold text-indigo-950">الأستاذ ماجد السويهري</div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // بيانات الأسئلة الثلاثة ومفاتيح الإجابة والمهارات
+        const questionsData = {
+            1: {
+                skill: "السؤال عن الاسم (Name)",
+                questionText: "What is your name?",
+                correct: "b",
+                explanationCorrect: "أحسنت! (My name is Sara) هي الإجابة الصحيحة للسؤال عن الاسم.",
+                explanationWrong: "الإجابة الصحيحة هي (b) لأن السؤال يسأل عن الاسم (name) وليس العمر."
+            },
+            2: {
+                skill: "السؤال عن العمر (Age)",
+                questionText: "How old are you?",
+                correct: "a",
+                explanationCorrect: "ممتاز! (I am ten) تعبر عن العمر بشكل صحيح.",
+                explanationWrong: "الإجابة الصحيحة هي (a) لأن (How old) تسأل عن العمر وليس مكان السكن."
+            },
+            3: {
+                skill: "السؤال عن المدينة (City)",
+                questionText: "Where do you live?",
+                correct: "a",
+                explanationCorrect: "رائع! (I live in Riyadh) تحدد مدينة السكن بشكل صحيح.",
+                explanationWrong: "الإجابة الصحيحة هي (a) لأن (Where do you live) تسأل عن مكان السكن."
+            }
+        };
+
+        // حالة إجابات الطالب
+        let userAnswers = { 1: null, 2: null, 3: null };
+        let isSubmitted = false;
+
+        // دالة اختيار الإجابة ووضع دائرة حولها
+        function selectOption(qNum, choice) {
+            if (isSubmitted) {
+                // إذا كان قد اعتمد النتيجة، نسمح له بتعديل إجابته مع إعادة التقييم تلقائياً أو إلغاء القفل
+                isSubmitted = false;
+                resetEvaluationStyles();
+            }
+
+            userAnswers[qNum] = choice;
+
+            // إزالة الدائرة من الخيارين ثم إضافتها للخيار المحدد
+            ['a', 'b'].forEach(opt => {
+                const btn = document.getElementById(`opt-${qNum}-${opt}`);
+                const path = btn.querySelector('.circle-path');
+                path.classList.remove('stroke-correct', 'stroke-wrong');
+                path.classList.add('stroke-selected');
+                
+                if (opt === choice) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+
+            updateDashboard();
+        }
+
+        // تحديث لوحة الأسئلة الجانبية
+        function updateDashboard() {
+            let answeredCount = 0;
+
+            [1, 2, 3].forEach(qNum => {
+                const circle = document.getElementById(`navCircle-${qNum}`);
+                const btn = document.getElementById(`navBtn-${qNum}`);
+
+                if (userAnswers[qNum]) {
+                    answeredCount++;
+                    if (!isSubmitted) {
+                        circle.className = "w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-extrabold en-font transition";
+                        btn.className = "flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-indigo-400 bg-indigo-50/50 transition group";
+                    }
+                } else {
+                    circle.className = "w-9 h-9 rounded-full bg-white border-2 border-slate-300 flex items-center justify-center font-extrabold text-slate-700 en-font transition";
+                    btn.className = "flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:border-indigo-400 transition group";
+                }
+            });
+
+            document.getElementById('progressBadge').textContent = `${answeredCount} / 3 مجاب`;
+        }
+
+        // الانتقال السلس للسؤال عند الضغط عليه في اللوحة
+        function scrollToQuestion(qNum) {
+            const card = document.getElementById(`qCard-${qNum}`);
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.classList.add('ring-4', 'ring-indigo-300');
+            setTimeout(() => card.classList.remove('ring-4', 'ring-indigo-300'), 1200);
+        }
+
+        // تصحيح الاختبار وتحديد المستوى
+        function evaluateQuiz() {
+            isSubmitted = true;
+            let score = 0;
+            const breakdownContainer = document.getElementById('skillsBreakdown');
+            breakdownContainer.innerHTML = '';
+
+            [1, 2, 3].forEach(qNum => {
+                const data = questionsData[qNum];
+                const selected = userAnswers[qNum];
+                const isCorrect = selected === data.correct;
+                if (isCorrect) score++;
+
+                const qCard = document.getElementById(`qCard-${qNum}`);
+                const qBadge = document.getElementById(`qBadge-${qNum}`);
+                const feedback = document.getElementById(`feedback-${qNum}`);
+                const navCircle = document.getElementById(`navCircle-${qNum}`);
+                const navBtn = document.getElementById(`navBtn-${qNum}`);
+
+                qBadge.classList.remove('hidden');
+                feedback.classList.remove('hidden');
+
+                // تحديث لون الدائرة المرسومة
+                if (selected) {
+                    const selectedBtn = document.getElementById(`opt-${qNum}-${selected}`);
+                    const svgPath = selectedBtn.querySelector('.circle-path');
+                    svgPath.classList.remove('stroke-selected');
+                    svgPath.classList.add(isCorrect ? 'stroke-correct' : 'stroke-wrong');
+                }
+
+                if (isCorrect) {
+                    qCard.className = "p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-50/40 transition-all";
+                    qBadge.className = "text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800";
+                    qBadge.textContent = "✓ إجابة صحيحة";
+                    feedback.className = "mt-2 text-xs font-bold text-emerald-700";
+                    feedback.textContent = data.explanationCorrect;
+
+                    navCircle.className = "w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center font-extrabold en-font";
+                    navCircle.textContent = "✓";
+                    navBtn.className = "flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-emerald-400 bg-emerald-50 transition";
+                } else {
+                    qCard.className = "p-4 rounded-2xl border-2 border-rose-300 bg-rose-50/40 transition-all";
+                    qBadge.className = "text-xs font-extrabold px-3 py-1 rounded-full bg-rose-100 text-rose-800";
+                    qBadge.textContent = selected ? "✗ إجابة خاطئة" : "⚠️ لم تتم الإجابة";
+                    feedback.className = "mt-2 text-xs font-bold text-rose-700";
+                    feedback.textContent = data.explanationWrong;
+
+                    navCircle.className = "w-9 h-9 rounded-full bg-rose-500 text-white flex items-center justify-center font-extrabold en-font";
+                    navCircle.textContent = "✗";
+                    navBtn.className = "flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-rose-300 bg-rose-50 transition";
+                }
+
+                // إضافة بطاقة المهارة في التقرير السفلي
+                const skillCard = document.createElement('div');
+                skillCard.className = `p-3.5 rounded-2xl border ${isCorrect ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50/60 border-rose-200'}`;
+                skillCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-extrabold text-xs text-slate-800">${data.skill}</span>
+                        <span class="text-xs font-extrabold px-2 py-0.5 rounded-full ${isCorrect ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'}">
+                            ${isCorrect ? 'متقن 🌟' : 'غير متقن'}
+                        </span>
+                    </div>
+                    <div class="text-xs text-slate-600 en-font text-left" dir="ltr">${data.questionText}</div>
+                `;
+                breakdownContainer.appendChild(skillCard);
+            });
+
+            // حساب المستوى العام
+            let levelInfo = {};
+            if (score === 3) {
+                levelInfo = {
+                    emoji: "🏆",
+                    title: "مستوى متقدم (ممتاز)",
+                    desc: "أتقن الطالب جميع مهارات التعريف بالنفس (الاسم، العمر، المدينة) بدرجة كاملة!",
+                    recommendation: "الطالب متميز ومستعد للانتقال إلى الدرس القادم وتطبيق الحوار مع زملائه بثقة.",
+                    boxClass: "bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl p-4 text-center shadow-md",
+                    badgeBoxClass: "bg-emerald-50 p-4 rounded-2xl border border-emerald-300",
+                    badgeTextClass: "text-lg font-extrabold text-emerald-800 mt-1"
+                };
+            } else if (score === 2) {
+                levelInfo = {
+                    emoji: "⭐",
+                    title: "مستوى متوسط (جيد جداً)",
+                    desc: "أداء جيد جداً! أتقن الطالب معظم المهارات مع وجود خطأ واحد فقط.",
+                    recommendation: "يُنصح بمراجعة السؤال الذي أخطأ فيه الطالب وتدريبه شفوياً عليه لتثبيت المهارة.",
+                    boxClass: "bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-2xl p-4 text-center shadow-md",
+                    badgeBoxClass: "bg-amber-50 p-4 rounded-2xl border border-amber-300",
+                    badgeTextClass: "text-lg font-extrabold text-amber-800 mt-1"
+                };
+            } else {
+                levelInfo = {
+                    emoji: "🌱",
+                    title: "مستوى مبتدئ (يحتاج لدعم)",
+                    desc: "يحتاج الطالب إلى مراجعة معاني أدوات الاستفهام الأساسية (What / How old / Where).",
+                    recommendation: "يُنصح بإعادة تدريب الطالب على ربط الكلمات المفتاحية: (name = الاسم)، (old = العمر)، (live = السكن).",
+                    boxClass: "bg-gradient-to-br from-rose-500 to-pink-600 text-white rounded-2xl p-4 text-center shadow-md",
+                    badgeBoxClass: "bg-rose-50 p-4 rounded-2xl border border-rose-300",
+                    badgeTextClass: "text-lg font-extrabold text-rose-800 mt-1"
+                };
+            }
+
+            // تحديث الدرجة في الترويسة
+            document.getElementById('headerScore').textContent = score;
+
+            // تحديث صندوق المستوى في اللوحة الجانبية
+            const liveLevelBox = document.getElementById('liveLevelBox');
+            liveLevelBox.className = levelInfo.boxClass;
+            document.getElementById('levelEmoji').textContent = levelInfo.emoji;
+            document.getElementById('levelTitle').className = "font-extrabold text-white text-base";
+            document.getElementById('levelTitle').textContent = levelInfo.title;
+            document.getElementById('levelDesc').className = "text-xs text-white/90 mt-1";
+            document.getElementById('levelDesc').textContent = levelInfo.desc;
+
+            // تحديث وإظهار بطاقة التقرير السفلية
+            const studentNameInput = document.getElementById('studentName').value.trim();
+            document.getElementById('reportStudentName').textContent = studentNameInput || "طالب المتميز";
+            document.getElementById('reportFinalScore').textContent = `${score} / 3`;
+            
+            const reportLevelBadgeBox = document.getElementById('reportLevelBadgeBox');
+            reportLevelBadgeBox.className = levelInfo.badgeBoxClass;
+            const reportFinalLevel = document.getElementById('reportFinalLevel');
+            reportFinalLevel.className = levelInfo.badgeTextClass;
+            reportFinalLevel.textContent = `${levelInfo.emoji} ${levelInfo.title}`;
+
+            document.getElementById('reportRecommendation').textContent = levelInfo.recommendation;
+            
+            const today = new Date();
+            document.getElementById('reportDate').textContent = `تاريخ التقييم: ${today.toLocaleDateString('ar-SA')}`;
+
+            const reportCard = document.getElementById('resultReportCard');
+            reportCard.classList.remove('hidden');
+            reportCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // طباعة نتيجة الطالب
+        function printStudentResult() {
+            if (!isSubmitted) {
+                evaluateQuiz();
+            }
+            const studentNameInput = document.getElementById('studentName').value.trim();
+            document.getElementById('reportStudentName').textContent = studentNameInput || "غير محدد";
+            setTimeout(() => {
+                window.print();
+            }, 250);
+        }
+
+        // إزالة تنسيقات التصحيح عند الرغبة في التعديل
+        function resetEvaluationStyles() {
+            [1, 2, 3].forEach(qNum => {
+                document.getElementById(`qCard-${qNum}`).className = "p-4 rounded-2xl border-2 border-transparent transition-all bg-slate-50/70 hover:bg-slate-50";
+                document.getElementById(`qBadge-${qNum}`).classList.add('hidden');
+                document.getElementById(`feedback-${qNum}`).classList.add('hidden');
+                document.getElementById(`navCircle-${qNum}`).textContent = qNum;
+            });
+        }
+
+        // إعادة الاختبار بالكامل
+        function resetQuiz() {
+            userAnswers = { 1: null, 2: null, 3: null };
+            isSubmitted = false;
+            document.getElementById('headerScore').textContent = "--";
+            document.getElementById('resultReportCard').classList.add('hidden');
+
+            [1, 2, 3].forEach(qNum => {
+                ['a', 'b'].forEach(opt => {
+                    const btn = document.getElementById(`opt-${qNum}-${opt}`);
+                    btn.classList.remove('selected');
+                    const path = btn.querySelector('.circle-path');
+                    path.classList.remove('stroke-correct', 'stroke-wrong');
+                    path.classList.add('stroke-selected');
+                });
+            });
+
+            resetEvaluationStyles();
+            updateDashboard();
+
+            document.getElementById('liveLevelBox').className = "bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl p-4 text-center border border-slate-200";
+            document.getElementById('levelEmoji').textContent = "📝";
+            document.getElementById('levelTitle').className = "font-extrabold text-slate-800 text-base";
+            document.getElementById('levelTitle').textContent = "بانتظار إكمال الإجابات";
+            document.getElementById('levelDesc').className = "text-xs text-slate-600 mt-1";
+            document.getElementById('levelDesc').textContent = "ضع دائرة حول الإجابة الصحيحة في الأسئلة الثلاثة ثم اضغط على اعتماد النتيجة.";
+        }
+
+        // نطق الأسئلة صوتياً لمساعدة الطالب
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.85;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // تحديث اسم الطالب تلقائياً في التقرير عند كتابته
+        document.getElementById('studentName').addEventListener('input', function(e) {
+            document.getElementById('reportStudentName').textContent = e.target.value.trim() || "غير محدد";
+        });
+    </script>
+</body>
+</html>
